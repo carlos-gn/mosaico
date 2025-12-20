@@ -39,6 +39,7 @@ void focusApp(pid_t pid) {
 }
 */
 import "C"
+
 import (
 	"fmt"
 	"slices"

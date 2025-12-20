@@ -13,34 +13,6 @@ import (
 
 var globalStrip *strip.Strip
 
-// func applyLayout() {
-// 	gap := 10.0
-// 	screenWidth, screenHeight, _ := wm.GetScreenBounds()
-// 	colWidth := screenWidth / float64(globalStrip.VisibleCount)
-
-// 	for i, col := range globalStrip.Columns {
-// 		x := (float64(i)-float64(globalStrip.ViewportStart))*colWidth + gap/2
-// 		w := colWidth - gap
-
-// 		visible := x >= 0 && x < screenWidth
-
-// 		for j, win := range col.Windows {
-// 			if visible {
-// 				wm.UnhideApp(win.PID)
-
-// 				// Vertical stacking
-// 				winCount := len(col.Windows)
-// 				winH := (screenHeight - gap - gap*float64(winCount-1)) / float64(winCount)
-// 				winY := gap/2 + float64(j)*(winH+gap)
-
-// 				wm.SetPositionAndSize(win.PID, x, winY, w, winH)
-// 			} else {
-// 				wm.HideApp(win.PID)
-// 			}
-// 		}
-// 	}
-// }
-
 func applyLayout() {
 	gap := float64(10)
 
@@ -93,6 +65,7 @@ func watchWindows() {
 	for range ticker.C {
 		globalStrip.Mutex.Lock()
 
+		changed := false
 		windows, _ := wm.GetWindowList()
 		currentPIDs := globalStrip.GetAllWindowPIDs()
 
@@ -103,6 +76,7 @@ func watchWindows() {
 					ID: w.ID, PID: w.PID, Title: w.OwnerName,
 				})
 				wm.GetWindow(w.PID) // warm cache
+				changed = true
 				fmt.Printf("New window: %s\n", w.OwnerName)
 			}
 		}
@@ -111,12 +85,16 @@ func watchWindows() {
 		for pid := range currentPIDs {
 			if !isProcessRunning(pid) {
 				globalStrip.RemoveWindowByPID(pid)
+				changed = true
 				fmt.Printf("Removed window PID=%d\n", pid)
 			}
 		}
 
 		globalStrip.Mutex.Unlock()
-		applyLayout()
+
+		if changed {
+			applyLayout()
+		}
 	}
 }
 
@@ -184,6 +162,34 @@ func main() {
 			globalStrip.Mutex.Lock()
 			defer globalStrip.Mutex.Unlock()
 			globalStrip.ScrollDown()
+			applyLayout()
+			focusCurrentWindow()
+		},
+		MoveWindowRight: func() {
+			globalStrip.Mutex.Lock()
+			defer globalStrip.Mutex.Unlock()
+			globalStrip.MoveWindowRight()
+			applyLayout()
+			focusCurrentWindow()
+		},
+		MoveWindowLeft: func() {
+			globalStrip.Mutex.Lock()
+			defer globalStrip.Mutex.Unlock()
+			globalStrip.MoveWindowLeft()
+			applyLayout()
+			focusCurrentWindow()
+		},
+		MoveWindowUp: func() {
+			globalStrip.Mutex.Lock()
+			defer globalStrip.Mutex.Unlock()
+			globalStrip.MoveWindowUp()
+			applyLayout()
+			focusCurrentWindow()
+		},
+		MoveWindowDown: func() {
+			globalStrip.Mutex.Lock()
+			defer globalStrip.Mutex.Unlock()
+			globalStrip.MoveWindowDown()
 			applyLayout()
 			focusCurrentWindow()
 		},

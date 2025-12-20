@@ -27,6 +27,7 @@ static CFMachPortRef createEventTap() {
 }
 */
 import "C"
+
 import (
 	"strings"
 
@@ -45,24 +46,30 @@ const (
 var Commands = make(chan Command, 10)
 
 var (
-	modifierMask   int
-	keyScrollLeft  int
-	keyScrollRight int
-	keyFocusUp     int
-	keyFocusDown   int
+	modifierMask     int
+	moveModifierMask int
+	keyScrollLeft    int
+	keyScrollRight   int
+	keyFocusUp       int
+	keyFocusDown     int
 )
 
 var handlers Handlers
 
 type Handlers struct {
-	ScrollLeft  func()
-	ScrollRight func()
-	FocusUp     func()
-	FocusDown   func()
+	ScrollLeft      func()
+	ScrollRight     func()
+	FocusUp         func()
+	FocusDown       func()
+	MoveWindowRight func()
+	MoveWindowLeft  func()
+	MoveWindowUp    func()
+	MoveWindowDown  func()
 }
 
 func Configure(cfg config.HotkeyConfig) {
 	modifierMask = ParseModifier(cfg.Modifier)
+	moveModifierMask = ParseModifier(cfg.MoveModifier)
 	keyScrollLeft = ParseKey(cfg.ScrollLeft)
 	keyScrollRight = ParseKey(cfg.ScrollRight)
 	keyFocusUp = ParseKey(cfg.FocusUp)
@@ -75,28 +82,47 @@ func SetHandlers(h Handlers) {
 
 //export hotkeyCallback
 func hotkeyCallback(keyCode C.int, modifiers C.int) {
-	if int(modifiers)&modifierMask != modifierMask {
-		return // not our combo
+	if int(modifiers)&moveModifierMask == moveModifierMask {
+		switch int(keyCode) {
+		case keyScrollLeft:
+			if handlers.MoveWindowLeft != nil {
+				handlers.MoveWindowLeft()
+			}
+		case keyScrollRight:
+			if handlers.MoveWindowRight != nil {
+				handlers.MoveWindowRight()
+			}
+		case keyFocusUp:
+			if handlers.MoveWindowUp != nil {
+				handlers.MoveWindowUp()
+			}
+		case keyFocusDown:
+			if handlers.MoveWindowDown != nil {
+				handlers.MoveWindowDown()
+			}
+		}
+
+	} else if int(modifiers)&modifierMask == modifierMask {
+		switch int(keyCode) {
+		case keyScrollLeft:
+			if handlers.ScrollLeft != nil {
+				handlers.ScrollLeft()
+			}
+		case keyScrollRight:
+			if handlers.ScrollRight != nil {
+				handlers.ScrollRight()
+			}
+		case keyFocusUp:
+			if handlers.FocusUp != nil {
+				handlers.FocusUp()
+			}
+		case keyFocusDown:
+			if handlers.FocusDown != nil {
+				handlers.FocusDown()
+			}
+		}
 	}
 
-	switch int(keyCode) {
-	case keyScrollLeft:
-		if handlers.ScrollLeft != nil {
-			handlers.ScrollLeft()
-		}
-	case keyScrollRight:
-		if handlers.ScrollRight != nil {
-			handlers.ScrollRight()
-		}
-	case keyFocusUp:
-		if handlers.FocusUp != nil {
-			handlers.FocusUp()
-		}
-	case keyFocusDown:
-		if handlers.FocusDown != nil {
-			handlers.FocusDown()
-		}
-	}
 }
 
 func StartEventTap() {

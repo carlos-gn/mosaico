@@ -1,0 +1,56 @@
+version: "3"
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  build:
+    desc: Build the daemon
+    cmds:
+      - go build -o bin/mosaico ./cmd/daemon
+
+  run:
+    desc: Run the daemon
+    cmds:
+      - go run ./cmd/daemon
+
+  tui:
+    desc: Run the TUI (debug)
+    cmds:
+      - go run ./cmd/tui
+
+  fmt:
+    desc: Format code
+    cmds:
+      - gofmt -w .
+      - goimports -w .
+
+  lint:
+    desc: Run linter
+    cmds:
+      - golangci-lint run
+
+  lint-fix:
+    desc: Run linting tools, and apply fixes.
+    cmds:
+      - golangci-lint run --fix ./...
+
+  check:
+    desc: Format and lint
+    cmds:
+      - task: fmt
+      - task: lint
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - rm -rf bin/
+      - rm -f debug.log trace.out *.prof
+
+  install:
+    desc: Install to /usr/local/bin
+    cmds:
+      - task: build
+      - cp bin/mosaico /usr/local/bin/

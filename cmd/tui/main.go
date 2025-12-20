@@ -10,6 +10,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/machina/mosaico/internal/config"
 	"github.com/machina/mosaico/internal/hotkeys"
 	"github.com/machina/mosaico/internal/strip"
@@ -231,12 +232,12 @@ func watchWindows(p *tea.Program, s *strip.Strip) {
 			}
 		}
 
-		// for pid := range currentPIDs {
-		// 	if !isProcessRunning(pid) {
-		// 		s.RemoveWindowByPID(pid)
-		// 		changed = true
-		// 	}
-		// }
+		for pid := range currentPIDs {
+			if !isProcessRunning(pid) {
+				s.RemoveWindowByPID(pid)
+				changed = true
+			}
+		}
 
 		if changed {
 			p.Send(WindowsChanged{})
@@ -260,8 +261,8 @@ func main() {
 		}
 	}()
 
-	config, _ := config.Load("~/.config/mosaico/config.toml")
-	hotkeys.Configure(config.Hotkeys)
+	cfg, _ := config.Load("~/.config/mosaico/config.toml")
+	hotkeys.Configure(cfg.Hotkeys)
 	go hotkeys.StartEventTap()
 
 	if _, err := p.Run(); err != nil {
