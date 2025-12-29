@@ -65,6 +65,14 @@ type Handlers struct {
 	MoveWindowLeft  func()
 	MoveWindowUp    func()
 	MoveWindowDown  func()
+	JumpToColumn    func(int)
+	MoveToColumn    func(int)
+}
+
+// macOS keycodes for number keys 1-9
+var numberKeyCodes = map[int]int{
+	18: 1, 19: 2, 20: 3, 21: 4, 23: 5,
+	22: 6, 26: 7, 28: 8, 25: 9,
 }
 
 func Configure(cfg config.HotkeyConfig) {
@@ -83,6 +91,14 @@ func SetHandlers(h Handlers) {
 //export hotkeyCallback
 func hotkeyCallback(keyCode C.int, modifiers C.int) {
 	if int(modifiers)&moveModifierMask == moveModifierMask {
+		// Check for number keys (1-9) to move window to column
+		if colNum, ok := numberKeyCodes[int(keyCode)]; ok {
+			if handlers.MoveToColumn != nil {
+				handlers.MoveToColumn(colNum)
+			}
+			return
+		}
+
 		switch int(keyCode) {
 		case keyScrollLeft:
 			if handlers.MoveWindowLeft != nil {
@@ -103,6 +119,14 @@ func hotkeyCallback(keyCode C.int, modifiers C.int) {
 		}
 
 	} else if int(modifiers)&modifierMask == modifierMask {
+		// Check for number keys (1-9) to jump to column
+		if colNum, ok := numberKeyCodes[int(keyCode)]; ok {
+			if handlers.JumpToColumn != nil {
+				handlers.JumpToColumn(colNum)
+			}
+			return
+		}
+
 		switch int(keyCode) {
 		case keyScrollLeft:
 			if handlers.ScrollLeft != nil {

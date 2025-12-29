@@ -318,3 +318,51 @@ func (s *Strip) GetAllWindowPIDs() map[uint32]bool {
 	}
 	return pids
 }
+
+// JumpToColumn moves focus to column n (1-indexed)
+func (s *Strip) JumpToColumn(n int) {
+	target := n - 1
+	if target < 0 || target >= len(s.Columns) {
+		return
+	}
+	s.FocusedCol = target
+	s.clampFocus()
+}
+
+// MoveToColumn moves current window to column n (1-indexed)
+func (s *Strip) MoveToColumn(n int) {
+	target := n - 1
+	if len(s.Columns) == 0 || target < 0 {
+		return
+	}
+
+	// Get current window
+	col := s.Columns[s.FocusedCol]
+	if len(col.Windows) == 0 {
+		return
+	}
+	win := col.Windows[col.Focused]
+
+	// Remove from current column
+	col.Windows = append(col.Windows[:col.Focused], col.Windows[col.Focused+1:]...)
+
+	// If current column is now empty, remove it
+	if len(col.Windows) == 0 {
+		s.Columns = append(s.Columns[:s.FocusedCol], s.Columns[s.FocusedCol+1:]...)
+	} else {
+		col.clampFocus()
+	}
+
+	// Create columns up to target if needed
+	for len(s.Columns) <= target {
+		s.Columns = append(s.Columns, &Column{Windows: []*Window{}})
+	}
+
+	// Add to target column
+	targetCol := s.Columns[target]
+	targetCol.Windows = append(targetCol.Windows, win)
+	targetCol.Focused = len(targetCol.Windows) - 1
+
+	s.FocusedCol = target
+	s.clampFocus()
+}

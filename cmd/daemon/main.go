@@ -193,6 +193,20 @@ func main() {
 			applyLayout()
 			focusCurrentWindow()
 		},
+		JumpToColumn: func(n int) {
+			globalStrip.Mutex.Lock()
+			defer globalStrip.Mutex.Unlock()
+			globalStrip.JumpToColumn(n)
+			applyLayout()
+			focusCurrentWindow()
+		},
+		MoveToColumn: func(n int) {
+			globalStrip.Mutex.Lock()
+			defer globalStrip.Mutex.Unlock()
+			globalStrip.MoveToColumn(n)
+			applyLayout()
+			focusCurrentWindow()
+		},
 	})
 
 	go watchWindows()
